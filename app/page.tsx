@@ -98,6 +98,9 @@ export default function Dashboard() {
     loading: false,
     error: null,
   });
+  // Track which date range the insights were generated for
+  const [insightsDateRange, setInsightsDateRange] = useState<{ start: string; end: string } | null>(null);
+  const insightsStale = insightsDateRange !== null && (insightsDateRange.start !== startDate || insightsDateRange.end !== endDate);
 
   const fetchMetrics = useCallback(async (start: string, end: string) => {
     setMetricsLoading(true);
@@ -128,6 +131,7 @@ export default function Dashboard() {
         throw new Error(json.error ?? "Insights request failed");
       }
       setInsights({ data: json.insights, loading: false, error: null });
+      setInsightsDateRange({ start, end });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setInsights({ data: null, loading: false, error: message });
@@ -227,6 +231,27 @@ export default function Dashboard() {
             )}
             Generate Insights
           </Button>
+        </div>
+
+        {/* Status bar: current date range + insights staleness */}
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <span>
+            Showing: <span className="font-medium text-foreground">{format(parseISO(startDate), "LLL dd, y")} - {format(parseISO(endDate), "LLL dd, y")}</span>
+          </span>
+          {insightsDateRange && (
+            <>
+              <Separator orientation="vertical" className="h-4" />
+              {insightsStale ? (
+                <Badge variant="outline" className="text-amber-500 border-amber-500/30">
+                  Insights outdated - regenerate for current range
+                </Badge>
+              ) : (
+                <span>
+                  Insights generated for: <span className="font-medium text-foreground">{format(parseISO(insightsDateRange.start), "LLL dd, y")} - {format(parseISO(insightsDateRange.end), "LLL dd, y")}</span>
+                </span>
+              )}
+            </>
+          )}
         </div>
 
         {/* Chart Card */}
