@@ -9,11 +9,13 @@ import {
   Moon,
   MessageSquareText,
   CalendarIcon,
+  AlertTriangle,
+  TrendingUp,
+  Zap,
+  Target,
 } from "lucide-react";
 import Image from "next/image";
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -24,6 +26,8 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
+import { DEFAULT_START, DEFAULT_END } from "@/lib/schemas";
+import type { InsightsResponse } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -55,10 +59,6 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import type { InsightsResponse } from "@/lib/schemas";
-
-const DEFAULT_START = "2025-02-01";
-const DEFAULT_END = "2026-01-30";
 
 const chartConfig = {
   clicks: {
@@ -78,6 +78,142 @@ type InsightsState = {
   loading: boolean;
   error: string | null;
 };
+
+const PRIORITY_VARIANT: Record<string, "destructive" | "secondary" | "outline"> = {
+  high: "destructive",
+  medium: "secondary",
+  low: "outline",
+};
+
+function InsightsPanel({ data, loading, error }: {
+  data: InsightsResponse | null;
+  loading: boolean;
+  error: string | null;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-3 py-16">
+          <Shimmer className="text-lg font-medium">
+            Analyzing your search data...
+          </Shimmer>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive/30">
+        <CardContent className="py-6">
+          <div className="flex items-center gap-2 text-sm text-destructive">
+            <AlertTriangle className="size-4 shrink-0" />
+            {error}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) return null;
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {data.executiveSummary?.length > 0 && (
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="size-4 text-violet-500" />
+              Executive Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2.5">
+              {data.executiveSummary.map((point: string, i: number) => (
+                <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {data.keyDrivers?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="size-4 text-amber-500" />
+              Key Drivers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {data.keyDrivers.map(
+                (d: { driver: string; impact: string }, i: number) => (
+                  <div key={i} className="space-y-0.5">
+                    <p className="text-sm font-medium">{d.driver}</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{d.impact}</p>
+                  </div>
+                )
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {data.actions?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="size-4 text-emerald-500" />
+              Recommended Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.actions.map(
+                (a: { action: string; priority: string }, i: number) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <Badge
+                      variant={PRIORITY_VARIANT[a.priority] ?? "outline"}
+                      className="mt-0.5 shrink-0 text-[10px] uppercase"
+                    >
+                      {a.priority}
+                    </Badge>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{a.action}</p>
+                  </div>
+                )
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {data.risksOrUnknowns?.length > 0 && (
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="size-4 text-amber-500" />
+              Risks & Unknowns
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {data.risksOrUnknowns.map((risk: string, i: number) => (
+                <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground" />
+                  {risk}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -113,7 +249,8 @@ export default function Dashboard() {
 
   const [metrics, setMetrics] = useState<MetricRow[]>([]);
   const [metricsLoading, setMetricsLoading] = useState(false);
-  const [chartType, setChartType] = useState<"line" | "area" | "bar">("line");
+  const [metricsError, setMetricsError] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [visibleSeries, setVisibleSeries] = useState({
     clicks: true,
     impressions: true,
@@ -124,25 +261,20 @@ export default function Dashboard() {
     error: null,
   });
 
-  // Track which date range the chart and insights were generated for
-  const [chartDateRange, setChartDateRange] = useState<string>("");
-  const [insightsDateRange, setInsightsDateRange] = useState<string>("");
-  const insightsStale =
-    insightsDateRange !== "" && insightsDateRange !== chartDateRange;
-
   const fetchMetrics = useCallback(
     async (start: string, end: string) => {
       setMetricsLoading(true);
+      setMetricsError(null);
       try {
         const res = await fetch(
           `/api/metrics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
         );
         if (!res.ok) throw new Error("Failed to fetch metrics");
         const json = await res.json();
-        const data = Array.isArray(json) ? json : json.data ?? [];
-        setMetrics(Array.isArray(data) ? data : []);
-        setChartDateRange(`${start}|${end}`);
-      } catch {
+        setMetrics(json.data);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to load chart data";
+        setMetricsError(msg);
         setMetrics([]);
       } finally {
         setMetricsLoading(false);
@@ -164,14 +296,11 @@ export default function Dashboard() {
         throw new Error(json.error ?? "Insights request failed");
       }
       setInsights({ data: json.insights, loading: false, error: null });
-      setInsightsDateRange(`${start}|${end}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setInsights({ data: null, loading: false, error: msg });
     }
   }, []);
-
-  // No auto-fetch on mount -- user must select dates and click Generate
 
   const handleGenerate = () => {
     fetchMetrics(startDate, endDate);
@@ -182,18 +311,17 @@ export default function Dashboard() {
     setVisibleSeries((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const totalClicks = useMemo(
-    () => metrics.reduce((sum, r) => sum + r.clicks, 0),
+  const { totalClicks, totalImpressions } = useMemo(
+    () =>
+      metrics.reduce(
+        (acc, r) => ({
+          totalClicks: acc.totalClicks + r.clicks,
+          totalImpressions: acc.totalImpressions + r.impressions,
+        }),
+        { totalClicks: 0, totalImpressions: 0 }
+      ),
     [metrics]
   );
-  const totalImpressions = useMemo(
-    () => metrics.reduce((sum, r) => sum + r.impressions, 0),
-    [metrics]
-  );
-
-  const displayRange = chartDateRange
-    ? `${format(parseISO(chartDateRange.split("|")[0]), "LLL dd, y")} \u2013 ${format(parseISO(chartDateRange.split("|")[1]), "LLL dd, y")}`
-    : "Loading...";
 
   return (
     <div className="min-h-screen bg-background">
@@ -253,7 +381,6 @@ export default function Dashboard() {
               size="sm"
               onClick={handleGenerate}
               disabled={insights.loading || metricsLoading}
-              className=""
             >
               {insights.loading || metricsLoading ? (
                 <Spinner className="size-3.5" />
@@ -271,7 +398,7 @@ export default function Dashboard() {
       <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
 
         {/* Empty state - shown when no data loaded yet */}
-        {metrics.length === 0 && !metricsLoading && !insights.loading && (
+        {metrics.length === 0 && !metricsLoading && !insights.loading && !metricsError && (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <Image
               src="/icon.png"
@@ -288,109 +415,94 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stat toggles + Chart - only show when we have data */}
+        {/* Metrics error */}
+        {metricsError && (
+          <Card className="border-destructive/30">
+            <CardContent className="py-6">
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertTriangle className="size-4 shrink-0" />
+                {metricsError}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Charts - only show when we have data */}
         {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Search Performance</CardTitle>
-                <CardDescription>
-                  Daily clicks and impressions over time
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "area" | "bar")}>
-                  <SelectTrigger className="h-9 w-[90px] text-xs">
+              <div className="flex items-center gap-3">
+                <div>
+                  <CardTitle>Search Performance</CardTitle>
+                  <CardDescription>
+                    Daily clicks and impressions over time
+                  </CardDescription>
+                </div>
+                <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
+                  <SelectTrigger className="h-8 w-[80px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="line">Line</SelectItem>
-                    <SelectItem value="area">Area</SelectItem>
                     <SelectItem value="bar">Bar</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button
-                  variant="outline"
-                  onClick={() => toggleSeries("clicks")}
-                  className={cn(
-                    "flex h-auto flex-col items-center gap-0 px-5 py-2 transition-all",
-                    visibleSeries.clicks
-                      ? "border-[#BA57FC]/30 bg-[#BA57FC]/5"
-                      : "opacity-40"
-                  )}
-                >
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Clicks
-                  </span>
-                  <span className="text-xl font-bold tabular-nums">
-                    {totalClicks.toLocaleString()}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => toggleSeries("impressions")}
-                  className={cn(
-                    "flex h-auto flex-col items-center gap-0 px-5 py-2 transition-all",
-                    visibleSeries.impressions
-                      ? "border-[#BA57FC]/20 bg-[#BA57FC]/5"
-                      : "opacity-40"
-                  )}
-                >
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Impressions
-                  </span>
-                  <span className="text-xl font-bold tabular-nums">
-                    {totalImpressions.toLocaleString()}
-                  </span>
-                </Button>
+              </div>
+              <div className="flex gap-4 text-sm text-muted-foreground">
+                <span>Clicks: <span className="font-semibold text-foreground tabular-nums">{totalClicks.toLocaleString()}</span></span>
+                <span>Impressions: <span className="font-semibold text-foreground tabular-nums">{totalImpressions.toLocaleString()}</span></span>
               </div>
             </div>
           </CardHeader>
           <Separator />
-          <CardContent className="pt-6">
-            <ChartContainer
-                config={chartConfig}
-                className="aspect-auto h-[320px] w-full"
-              >
+          <CardContent className="space-y-6 pt-6">
+            {/* Impressions chart */}
+            <div>
+              <ChartContainer config={chartConfig} className="aspect-auto h-[200px] w-full">
                 {chartType === "line" ? (
                   <LineChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
                     <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
-                    {visibleSeries.clicks && <Line dataKey="clicks" type="monotone" stroke="var(--color-clicks)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />}
-                    {visibleSeries.impressions && <Line dataKey="impressions" type="monotone" stroke="var(--color-impressions)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />}
+                    <Line dataKey="impressions" type="monotone" stroke="var(--color-impressions)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                   </LineChart>
-                ) : chartType === "area" ? (
-                  <AreaChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
-                    <defs>
-                      <linearGradient id="fillClicks" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-clicks)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="var(--color-clicks)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="fillImpressions" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-impressions)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="var(--color-impressions)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
-                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
-                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
-                    {visibleSeries.clicks && <Area dataKey="clicks" type="monotone" stroke="var(--color-clicks)" strokeWidth={2} fill="url(#fillClicks)" />}
-                    {visibleSeries.impressions && <Area dataKey="impressions" type="monotone" stroke="var(--color-impressions)" strokeWidth={2} fill="url(#fillImpressions)" />}
-                  </AreaChart>
                 ) : (
                   <BarChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
                     <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
-                    {visibleSeries.clicks && <Bar dataKey="clicks" fill="var(--color-clicks)" radius={[2, 2, 0, 0]} />}
-                    {visibleSeries.impressions && <Bar dataKey="impressions" fill="var(--color-impressions)" radius={[2, 2, 0, 0]} />}
+                    <Bar dataKey="impressions" fill="var(--color-impressions)" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 )}
               </ChartContainer>
+              <p className="mt-1.5 text-center text-xs font-medium text-muted-foreground">Impressions</p>
+            </div>
+            <Separator />
+            {/* Clicks chart */}
+            <div>
+              <ChartContainer config={chartConfig} className="aspect-auto h-[200px] w-full">
+                {chartType === "line" ? (
+                  <LineChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
+                    <Line dataKey="clicks" type="monotone" stroke="var(--color-clicks)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                  </LineChart>
+                ) : (
+                  <BarChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
+                    <Bar dataKey="clicks" fill="var(--color-clicks)" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                )}
+              </ChartContainer>
+              <p className="mt-1.5 text-center text-xs font-medium text-muted-foreground">Clicks</p>
+            </div>
           </CardContent>
         </Card>}
 
@@ -405,142 +517,11 @@ export default function Dashboard() {
 
         {/* Insights Panel */}
         <div id="insights-panel">
-          {insights.loading && (
-            <Card>
-              <CardContent className="flex items-center justify-center gap-3 py-16">
-                <Shimmer className="text-lg font-medium">
-                  Analyzing your search data...
-                </Shimmer>
-              </CardContent>
-            </Card>
-          )}
-
-          {insights.error && (
-            <Card>
-              <CardContent className="py-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {insights.error}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {insights.data && !insights.loading && (
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Executive Summary */}
-              {insights.data.executiveSummary?.length > 0 && (
-                <Card className="md:col-span-2">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Executive Summary
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2.5">
-                      {insights.data.executiveSummary.map(
-                        (point: string, i: number) => (
-                          <li
-                            key={i}
-                            className="flex gap-3 text-sm leading-relaxed text-muted-foreground"
-                          >
-                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground/40" />
-                            {point}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Key Drivers */}
-              {insights.data.keyDrivers?.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Key Drivers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {insights.data.keyDrivers.map(
-                        (
-                          d: { driver: string; impact: string },
-                          i: number
-                        ) => (
-                          <div key={i} className="space-y-0.5">
-                            <p className="text-sm font-medium">{d.driver}</p>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                              {d.impact}
-                            </p>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Recommended Actions */}
-              {insights.data.actions?.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Recommended Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {insights.data.actions.map(
-                        (
-                          a: { action: string; priority: string },
-                          i: number
-                        ) => (
-                          <div key={i} className="flex items-start gap-2.5">
-                            <Badge
-                              variant="secondary"
-                              className="mt-0.5 shrink-0 text-[10px] uppercase"
-                            >
-                              {a.priority}
-                            </Badge>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                              {a.action}
-                            </p>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Risks & Unknowns */}
-              {insights.data.risksOrUnknowns?.length > 0 && (
-                <Card className="md:col-span-2">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Risks & Unknowns
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {insights.data.risksOrUnknowns.map(
-                        (risk: string, i: number) => (
-                          <li
-                            key={i}
-                            className="flex gap-3 text-sm leading-relaxed text-muted-foreground"
-                          >
-                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground/40" />
-                            {risk}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+          <InsightsPanel
+            data={insights.data}
+            loading={insights.loading}
+            error={insights.error}
+          />
         </div>
       </main>
     </div>
