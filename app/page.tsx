@@ -260,6 +260,8 @@ export default function Dashboard() {
     loading: false,
     error: null,
   });
+  // Only updates when Generate is clicked, not when date picker changes
+  const [generatedRange, setGeneratedRange] = useState<{ start: string; end: string } | null>(null);
 
   const fetchMetrics = useCallback(
     async (start: string, end: string) => {
@@ -303,6 +305,7 @@ export default function Dashboard() {
   }, []);
 
   const handleGenerate = () => {
+    setGeneratedRange({ start: startDate, end: endDate });
     fetchMetrics(startDate, endDate);
     fetchInsights(startDate, endDate);
   };
@@ -434,7 +437,9 @@ export default function Dashboard() {
               <div>
                 <CardTitle className="text-xl">Search Performance</CardTitle>
                 <CardDescription className="text-sm">
-                  {format(parseISO(startDate), "LLL dd, yyyy")} &ndash; {format(parseISO(endDate), "LLL dd, yyyy")}
+                  {generatedRange
+                    ? `${format(parseISO(generatedRange.start), "LLL dd, yyyy")} \u2013 ${format(parseISO(generatedRange.end), "LLL dd, yyyy")}`
+                    : "Select dates and generate"}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
