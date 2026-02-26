@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     const { startDate, endDate } = parsed.data;
     const data = queryData(startDate, endDate);
 
-    if (!data.summary || data.summary.total_clicks === 0) {
+    if (!data.summary || !data.summary.total_clicks) {
       return NextResponse.json(
         { success: false, error: "No data found for the given date range." },
         { status: 404 }
