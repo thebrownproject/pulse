@@ -90,10 +90,7 @@ function ThemeToggle() {
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: parseISO(DEFAULT_START),
-    to: parseISO(DEFAULT_END),
-  });
+  const [dateRange, setDateRange] = useState<DateRange>({});
   const startDate = dateRange.from
     ? format(dateRange.from, "yyyy-MM-dd")
     : DEFAULT_START;
@@ -102,7 +99,7 @@ export default function Dashboard() {
     : DEFAULT_END;
 
   const [metrics, setMetrics] = useState<MetricRow[]>([]);
-  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [metricsLoading, setMetricsLoading] = useState(false);
   const [visibleSeries, setVisibleSeries] = useState({
     clicks: true,
     impressions: true,
@@ -159,10 +156,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch metrics on mount only
-  useEffect(() => {
-    fetchMetrics(DEFAULT_START, DEFAULT_END);
-  }, [fetchMetrics]);
+  // No auto-fetch on mount -- user must select dates and click Generate
 
   const handleGenerate = () => {
     fetchMetrics(startDate, endDate);
@@ -224,7 +218,7 @@ export default function Dashboard() {
                       format(dateRange.from, "LLL dd, y")
                     )
                   ) : (
-                    "Pick a date range"
+                    "Select dates"
                   )}
                 </Button>
               </PopoverTrigger>
@@ -316,7 +310,7 @@ export default function Dashboard() {
               </div>
             ) : metrics.length === 0 ? (
               <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
-                No data for the selected range. Try updating the chart.
+                Select a date range and click Generate Insights to get started.
               </div>
             ) : (
               <ChartContainer
