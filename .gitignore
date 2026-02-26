@@ -41,3 +41,7 @@ output/
 # Beads / Space-Agents (local tooling)
 .beads/
 .space-agents/
+
+# Specs / Agent config (local only)
+specs/
+AGENTS.md
