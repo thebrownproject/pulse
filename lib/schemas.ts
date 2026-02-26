@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// Date range of the provided GSC dataset
+export const DEFAULT_START = "2025-02-01";
+export const DEFAULT_END = "2026-01-30";
+
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 
 export const MetricsParamsSchema = z.object({

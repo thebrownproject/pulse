@@ -121,7 +121,7 @@ function InsightsPanel({ data, loading, error }: {
     <div className="grid gap-4 md:grid-cols-2">
       {data.executiveSummary?.length > 0 && (
         <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="size-4" />
               Executive Summary
@@ -142,7 +142,7 @@ function InsightsPanel({ data, loading, error }: {
 
       {data.keyDrivers?.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Zap className="size-4" />
               Key Drivers
@@ -165,7 +165,7 @@ function InsightsPanel({ data, loading, error }: {
 
       {data.actions?.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="size-4" />
               Recommended Actions
@@ -193,7 +193,7 @@ function InsightsPanel({ data, loading, error }: {
 
       {data.risksOrUnknowns?.length > 0 && (
         <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1">
             <CardTitle className="flex items-center gap-2 text-base">
               <AlertTriangle className="size-4" />
               Risks & Unknowns

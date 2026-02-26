@@ -15,7 +15,6 @@ interface CsvRow {
   impressions: string;
   ctr: string;
   position: string;
-  [key: string]: string;
 }
 
 function ingestCsv(): Promise<number> {
@@ -77,7 +76,7 @@ function ingestCsv(): Promise<number> {
   });
 }
 
-export async function GET() {
+export async function POST() {
   try {
     const { count } = db.prepare("SELECT COUNT(*) as count FROM gsc").get() as {
       count: number;
@@ -94,7 +93,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, rowCount });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Ingestion failed";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    console.error("Ingestion failed:", err);
+    return NextResponse.json({ success: false, error: "Ingestion failed" }, { status: 500 });
   }
 }

@@ -194,7 +194,7 @@ export async function POST(request: Request) {
     const cleaned = stripMarkdownFences(rawText);
 
     // Anthropic SDK types don't include cache fields yet, so we cast once
-    const usage = response.usage as Record<string, number>;
+    const usage = response.usage as unknown as Record<string, number>;
     const metrics = {
       latencyMs,
       inputTokens: response.usage.input_tokens,
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, insights: validated.data, _metrics: metrics });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Insights generation failed";
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    console.error("Insights generation failed:", err);
+    return NextResponse.json({ success: false, error: "Insights generation failed" }, { status: 500 });
   }
 }

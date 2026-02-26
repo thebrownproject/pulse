@@ -72,10 +72,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 **5. Ingest the CSV**
 
-On first run, visit this URL once to load the data into SQLite:
+On first run, trigger ingestion once to load the data into SQLite:
 
-```
-http://localhost:3000/api/ingest
+```bash
+curl -X POST http://localhost:3000/api/ingest
 ```
 
 Ingestion takes ~5 seconds for 431K rows. After that, all queries are instant.

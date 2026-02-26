@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { MetricsParamsSchema } from "@/lib/schemas";
-
-const DEFAULT_START = "2025-02-01";
-const DEFAULT_END = "2026-01-30";
+import { MetricsParamsSchema, DEFAULT_START, DEFAULT_END } from "@/lib/schemas";
 
 const metricsQuery = db.prepare(`
   SELECT analytics_date as date, SUM(clicks) as clicks, SUM(impressions) as impressions
@@ -29,9 +26,9 @@ export async function GET(request: NextRequest) {
 
     const rows = metricsQuery.all(parsed.data.start, parsed.data.end);
 
-    return NextResponse.json(rows);
+    return NextResponse.json({ success: true, data: rows });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch metrics";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    console.error("Failed to fetch metrics:", err);
+    return NextResponse.json({ success: false, error: "Failed to fetch metrics" }, { status: 500 });
   }
 }
