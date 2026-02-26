@@ -225,10 +225,11 @@ export default function Dashboard() {
               <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                   mode="range"
-                  defaultMonth={dateRange?.from}
+                  defaultMonth={dateRange?.from ?? parseISO(DEFAULT_START)}
                   selected={dateRange}
                   onSelect={(range) => range && setDateRange(range)}
                   numberOfMonths={2}
+                  disabled={{ before: parseISO(DEFAULT_START), after: parseISO(DEFAULT_END) }}
                 />
               </PopoverContent>
             </Popover>
