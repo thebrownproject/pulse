@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { format, parseISO } from "date-fns";
-import { Sun, Moon, Sparkles } from "lucide-react";
+import { Sun, Moon, Sparkles, CalendarIcon } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -14,7 +16,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -156,34 +162,66 @@ export default function Dashboard() {
         {/* Date filter row */}
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1.5">
-            <label
-              htmlFor="start-date"
-              className="text-sm font-medium text-muted-foreground"
-            >
+            <span className="text-sm font-medium text-muted-foreground">
               Start date
-            </label>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-40"
-            />
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[180px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="size-4" />
+                  {startDate
+                    ? format(parseISO(startDate), "PPP")
+                    : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate ? parseISO(startDate) : undefined}
+                  onSelect={(date) =>
+                    date && setStartDate(format(date, "yyyy-MM-dd"))
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-1.5">
-            <label
-              htmlFor="end-date"
-              className="text-sm font-medium text-muted-foreground"
-            >
+            <span className="text-sm font-medium text-muted-foreground">
               End date
-            </label>
-            <Input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-40"
-            />
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[180px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="size-4" />
+                  {endDate
+                    ? format(parseISO(endDate), "PPP")
+                    : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate ? parseISO(endDate) : undefined}
+                  onSelect={(date) =>
+                    date && setEndDate(format(date, "yyyy-MM-dd"))
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <Button onClick={handleGenerate} disabled={insights.loading}>
             {insights.loading ? (
