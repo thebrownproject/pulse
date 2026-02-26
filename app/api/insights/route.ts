@@ -58,16 +58,20 @@ function queryData(startDate: string, endDate: string): QueryResult {
     WHERE analytics_date BETWEEN ? AND ?
   `).get(startDate, endDate) as SummaryStats;
 
+  // Last 30 days of range for trend analysis
   const daily = db.prepare(`
-    SELECT
-      analytics_date,
-      SUM(clicks) as clicks,
-      SUM(impressions) as impressions,
-      ROUND(AVG(position), 1) as avg_position
-    FROM gsc
-    WHERE analytics_date BETWEEN ? AND ?
-    GROUP BY analytics_date
-    ORDER BY analytics_date ASC
+    SELECT * FROM (
+      SELECT
+        analytics_date,
+        SUM(clicks) as clicks,
+        SUM(impressions) as impressions,
+        ROUND(AVG(position), 1) as avg_position
+      FROM gsc
+      WHERE analytics_date BETWEEN ? AND ?
+      GROUP BY analytics_date
+      ORDER BY analytics_date DESC
+      LIMIT 30
+    ) ORDER BY analytics_date ASC
   `).all(startDate, endDate) as DailyRow[];
 
   const topKeywords = db.prepare(`
@@ -181,16 +185,13 @@ export async function POST(request: Request) {
       system: [SYSTEM_MESSAGE],
       messages: [
         { role: "user", content: prompt },
-        // Prefill forces Claude to begin output with { for reliable JSON (do not remove)
-        { role: "assistant", content: "{" },
       ],
     });
 
     const latencyMs = Date.now() - startTime;
     const firstBlock = response.content[0];
     const rawText = firstBlock?.type === "text" ? firstBlock.text : "";
-    // Prepend the prefilled { since Claude continues from it
-    const cleaned = stripMarkdownFences("{" + rawText);
+    const cleaned = stripMarkdownFences(rawText);
 
     // Anthropic SDK types don't include cache fields yet, so we cast once
     const usage = response.usage as unknown as Record<string, number>;
