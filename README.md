@@ -37,8 +37,8 @@ Load a Google Search Console CSV export, explore clicks and impressions over tim
 **1. Clone and install**
 
 ```bash
-git clone https://github.com/thebrownproject/arcadian-challenge
-cd arcadian-challenge
+git clone https://github.com/thebrownproject/pulse
+cd pulse
 npm install
 ```
 
