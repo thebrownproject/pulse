@@ -63,7 +63,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 const chartConfig = {
   clicks: {
     label: "Clicks",
-    theme: { light: "#BA57FC", dark: "#BA57FC" },
+    theme: { light: "#1a1a1a", dark: "#a1a1aa" },
   },
   impressions: {
     label: "Impressions",
@@ -431,22 +431,11 @@ export default function Dashboard() {
         {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div>
-                  <CardTitle>Search Performance</CardTitle>
-                  <CardDescription>
-                    Daily clicks and impressions over time
-                  </CardDescription>
-                </div>
-                <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
-                  <SelectTrigger className="h-8 w-[80px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="line">Line</SelectItem>
-                    <SelectItem value="bar">Bar</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <CardTitle>Search Performance</CardTitle>
+                <CardDescription>
+                  {format(parseISO(startDate), "LLL dd, yyyy")} &ndash; {format(parseISO(endDate), "LLL dd, yyyy")}
+                </CardDescription>
               </div>
               <div className="flex gap-2">
                 <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
@@ -455,13 +444,24 @@ export default function Dashboard() {
                 </div>
                 <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
                   <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
-                  <span className="text-xl font-bold tabular-nums text-[#BA57FC]">{totalClicks.toLocaleString()}</span>
+                  <span className="text-xl font-bold tabular-nums tabular-nums">{totalClicks.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </CardHeader>
           <Separator />
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="relative space-y-6 pt-6">
+            <div className="absolute -top-4 right-6 z-10">
+              <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
+                <SelectTrigger className="h-8 w-[80px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="line">Line</SelectItem>
+                  <SelectItem value="bar">Bar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {/* Impressions chart */}
             <div>
               <ChartContainer config={chartConfig} className="aspect-auto h-[200px] w-full">
