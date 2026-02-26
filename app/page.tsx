@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { format, parseISO } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { Sun, Moon, Sparkles, CalendarIcon } from "lucide-react";
+import Image from "next/image";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
@@ -79,8 +81,12 @@ function ThemeToggle() {
 }
 
 export default function Dashboard() {
-  const [startDate, setStartDate] = useState(DEFAULT_START);
-  const [endDate, setEndDate] = useState(DEFAULT_END);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: parseISO(DEFAULT_START),
+    to: parseISO(DEFAULT_END),
+  });
+  const startDate = dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : DEFAULT_START;
+  const endDate = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : DEFAULT_END;
   const [metrics, setMetrics] = useState<MetricRow[]>([]);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [visibleSeries, setVisibleSeries] = useState({
@@ -151,78 +157,57 @@ export default function Dashboard() {
       {/* Header */}
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-semibold tracking-tight">
-            GSC Insights
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/icon.png"
+              alt="Pulse"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
+            <h1 className="text-xl font-semibold tracking-tight">Pulse</h1>
+          </div>
           <ThemeToggle />
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-6 py-8">
         {/* Date filter row */}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1.5">
-            <span className="text-sm font-medium text-muted-foreground">
-              Start date
-            </span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-[180px] justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="size-4" />
-                  {startDate
-                    ? format(parseISO(startDate), "PPP")
-                    : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={startDate ? parseISO(startDate) : undefined}
-                  onSelect={(date) =>
-                    date && setStartDate(format(date, "yyyy-MM-dd"))
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="space-y-1.5">
-            <span className="text-sm font-medium text-muted-foreground">
-              End date
-            </span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-[180px] justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="size-4" />
-                  {endDate
-                    ? format(parseISO(endDate), "PPP")
-                    : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={endDate ? parseISO(endDate) : undefined}
-                  onSelect={(date) =>
-                    date && setEndDate(format(date, "yyyy-MM-dd"))
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[280px] justify-start text-left font-normal",
+                  !dateRange.from && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="size-4" />
+                {dateRange.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} -{" "}
+                      {format(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  "Pick a date range"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={dateRange}
+                onSelect={(range) => range && setDateRange(range)}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
           <Button onClick={handleGenerate} disabled={insights.loading}>
             {insights.loading ? (
               <Spinner className="size-4" />

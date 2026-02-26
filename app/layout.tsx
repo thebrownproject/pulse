@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GSC Insights",
+  title: "Pulse - GSC Insights",
   description: "Google Search Console analytics dashboard with AI-powered insights",
+  icons: { icon: "/icon.png" },
 };
 
 export default function RootLayout({
