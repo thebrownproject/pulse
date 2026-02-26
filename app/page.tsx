@@ -432,19 +432,21 @@ export default function Dashboard() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Search Performance</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl">Search Performance</CardTitle>
+                <CardDescription className="text-sm">
                   {format(parseISO(startDate), "LLL dd, yyyy")} &ndash; {format(parseISO(endDate), "LLL dd, yyyy")}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Impressions</span>
-                  <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
-                </div>
-                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
-                  <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex gap-2">
+                  <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Impressions</span>
+                    <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
+                  </div>
+                  <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
+                    <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
+                  </div>
                 </div>
                 <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
                   <SelectTrigger className="h-8 w-[80px] text-xs">
