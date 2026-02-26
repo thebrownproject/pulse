@@ -120,8 +120,8 @@ function InsightsPanel({ data, loading, error }: {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {data.executiveSummary?.length > 0 && (
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-1">
+        <Card className="gap-2 md:col-span-2">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="size-4" />
               Executive Summary
@@ -141,8 +141,8 @@ function InsightsPanel({ data, loading, error }: {
       )}
 
       {data.keyDrivers?.length > 0 && (
-        <Card>
-          <CardHeader className="pb-1">
+        <Card className="gap-2">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Zap className="size-4" />
               Key Drivers
@@ -164,8 +164,8 @@ function InsightsPanel({ data, loading, error }: {
       )}
 
       {data.actions?.length > 0 && (
-        <Card>
-          <CardHeader className="pb-1">
+        <Card className="gap-2">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="size-4" />
               Recommended Actions
@@ -192,8 +192,8 @@ function InsightsPanel({ data, loading, error }: {
       )}
 
       {data.risksOrUnknowns?.length > 0 && (
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-1">
+        <Card className="gap-2 md:col-span-2">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <AlertTriangle className="size-4" />
               Risks & Unknowns
@@ -449,13 +449,13 @@ export default function Dashboard() {
                 </Select>
               </div>
               <div className="flex gap-2">
-                <div className="flex flex-col items-center rounded-lg border px-5 py-2">
+                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Impressions</span>
+                  <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
+                </div>
+                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
                   <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
                   <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
-                </div>
-                <div className="flex flex-col items-center rounded-lg border border-[#BA57FC]/30 bg-[#BA57FC]/5 px-5 py-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#BA57FC]">Impressions</span>
-                  <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
                 </div>
               </div>
             </div>
