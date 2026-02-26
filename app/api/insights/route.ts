@@ -82,31 +82,43 @@ function queryData(startDate: string, endDate: string) {
   return { summary, daily, topKeywords, topPages };
 }
 
+const SYSTEM_PROMPT = `You are a senior SEO analyst specializing in Google Search Console data interpretation. You identify actionable patterns in click-through rates, keyword rankings, and page performance. You communicate findings as clear, data-backed insights for marketing teams.
+
+CRITICAL: Respond with ONLY valid JSON matching the schema below. No markdown fences, no commentary outside the JSON object.
+
+Response schema:
+{
+  "executiveSummary": ["string - key takeaway referencing specific metrics", ...],
+  "keyDrivers": [{"driver": "string - factor name", "impact": "string - measured effect"}, ...],
+  "actions": [{"action": "string - specific recommendation", "priority": "high|medium|low"}, ...],
+  "risksOrUnknowns": ["string - data gap or concern", ...]
+}`;
+
 function buildPrompt(data: ReturnType<typeof queryData>, startDate: string, endDate: string): string {
   const payload = JSON.stringify({
     period: { start: startDate, end: endDate },
     ...data,
   });
 
-  return `You are an SEO analyst. Analyze this Google Search Console data and respond with ONLY valid JSON (no markdown fences, no extra text).
+  return `Analyze this Google Search Console data for the period ${startDate} to ${endDate}.
+
+Dataset scope: ${data.summary.unique_keywords.toLocaleString()} unique keywords across ${data.summary.unique_pages.toLocaleString()} pages. ${data.summary.total_clicks.toLocaleString()} total clicks, ${data.summary.total_impressions.toLocaleString()} total impressions.
+
+Focus your analysis on:
+1. **Trend direction**: Are clicks/impressions growing, declining, or showing seasonal patterns?
+2. **CTR anomalies**: Keywords with high impressions but low CTR represent optimization opportunities
+3. **Position threshold**: Keywords at positions 8-15 are near page 1 and worth targeting
+4. **Content gaps**: High-performing keywords not matched to dedicated landing pages
+5. **Cannibalization risk**: Multiple pages competing for the same keyword cluster
 
 Data:
 ${payload}
 
-Respond with this exact JSON structure:
-{
-  "executiveSummary": ["bullet 1", "bullet 2", "..."],
-  "keyDrivers": [{"driver": "name", "impact": "description"}, ...],
-  "actions": [{"action": "what to do", "priority": "high|medium|low"}, ...],
-  "risksOrUnknowns": ["risk 1", "risk 2", "..."]
-}
-
-Rules:
-- executiveSummary: 3-5 key takeaways about performance
-- keyDrivers: top 3-5 factors driving clicks/impressions
-- actions: 3-5 recommended actions with priority
-- risksOrUnknowns: 2-3 data gaps or concerns
-- Be specific, reference actual keywords and pages from the data`;
+Requirements:
+- executiveSummary: 3-5 takeaways, each referencing specific numbers from the data
+- keyDrivers: Top 3-5 factors, with measurable impact descriptions
+- actions: 3-5 recommendations ordered by expected impact, reference specific keywords or pages
+- risksOrUnknowns: 2-3 data limitations or areas needing deeper investigation`;
 }
 
 function stripMarkdownFences(text: string): string {
@@ -140,7 +152,8 @@ export async function POST(request: Request) {
     const client = new Anthropic();
     const message = await client.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: prompt }],
     });
 
