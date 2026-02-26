@@ -454,8 +454,8 @@ export default function Dashboard() {
                   <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
                 </div>
                 <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
-                  <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#BA57FC]">Clicks</span>
+                  <span className="text-xl font-bold tabular-nums text-[#BA57FC]">{totalClicks.toLocaleString()}</span>
                 </div>
               </div>
             </div>
