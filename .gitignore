@@ -42,6 +42,9 @@ output/
 .beads/
 .space-agents/
 
+# Data (SQLite + CSV working copies)
+data/
+
 # Specs / Agent config (local only)
 specs/
 AGENTS.md
