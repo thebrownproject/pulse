@@ -90,11 +90,11 @@ function ThemeToggle() {
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState<DateRange>({});
-  const startDate = dateRange.from
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const startDate = dateRange?.from
     ? format(dateRange.from, "yyyy-MM-dd")
     : DEFAULT_START;
-  const endDate = dateRange.to
+  const endDate = dateRange?.to
     ? format(dateRange.to, "yyyy-MM-dd")
     : DEFAULT_END;
 
@@ -204,11 +204,11 @@ export default function Dashboard() {
                   size="sm"
                   className={cn(
                     "w-[260px] justify-start text-left font-normal",
-                    !dateRange.from && "text-muted-foreground"
+                    !dateRange?.from && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="size-3.5" />
-                  {dateRange.from ? (
+                  {dateRange?.from ? (
                     dateRange.to ? (
                       <>
                         {format(dateRange.from, "LLL dd, y")} &ndash;{" "}
@@ -225,7 +225,7 @@ export default function Dashboard() {
               <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                   mode="range"
-                  defaultMonth={dateRange.from}
+                  defaultMonth={dateRange?.from}
                   selected={dateRange}
                   onSelect={(range) => range && setDateRange(range)}
                   numberOfMonths={2}
@@ -254,8 +254,8 @@ export default function Dashboard() {
 
       <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
 
-        {/* Stat toggles + Chart */}
-        <Card>
+        {/* Stat toggles + Chart - only show when we have data */}
+        {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -304,16 +304,7 @@ export default function Dashboard() {
           </CardHeader>
           <Separator />
           <CardContent className="pt-6">
-            {metricsLoading ? (
-              <div className="flex h-[320px] items-center justify-center">
-                <Spinner className="size-6 text-muted-foreground" />
-              </div>
-            ) : metrics.length === 0 ? (
-              <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
-                Select a date range and click Generate Insights to get started.
-              </div>
-            ) : (
-              <ChartContainer
+            <ChartContainer
                 config={chartConfig}
                 className="aspect-auto h-[320px] w-full"
               >
@@ -381,9 +372,17 @@ export default function Dashboard() {
                   )}
                 </LineChart>
               </ChartContainer>
-            )}
           </CardContent>
-        </Card>
+        </Card>}
+
+        {/* Loading spinner while fetching chart data */}
+        {metricsLoading && (
+          <Card>
+            <CardContent className="flex h-[320px] items-center justify-center">
+              <Spinner className="size-6 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Insights Panel */}
         <div id="insights-panel">
