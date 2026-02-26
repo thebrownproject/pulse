@@ -15,7 +15,17 @@ import {
   Target,
 } from "lucide-react";
 import Image from "next/image";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +42,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -100,6 +117,7 @@ export default function Dashboard() {
 
   const [metrics, setMetrics] = useState<MetricRow[]>([]);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  const [chartType, setChartType] = useState<"line" | "area" | "bar">("line");
   const [visibleSeries, setVisibleSeries] = useState({
     clicks: true,
     impressions: true,
@@ -277,11 +295,23 @@ export default function Dashboard() {
         {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Search Performance</CardTitle>
-                <CardDescription>
-                  Daily clicks and impressions over time
-                </CardDescription>
+              <div className="flex items-center gap-3">
+                <div>
+                  <CardTitle>Search Performance</CardTitle>
+                  <CardDescription>
+                    Daily clicks and impressions over time
+                  </CardDescription>
+                </div>
+                <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "area" | "bar")}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="line">Line</SelectItem>
+                    <SelectItem value="area">Area</SelectItem>
+                    <SelectItem value="bar">Bar</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -327,69 +357,44 @@ export default function Dashboard() {
                 config={chartConfig}
                 className="aspect-auto h-[320px] w-full"
               >
-                <LineChart
-                  accessibilityLayer
-                  data={metrics}
-                  margin={{ left: 12, right: 12 }}
-                >
-                  <CartesianGrid
-                    vertical={false}
-                    strokeDasharray="3 3"
-                    className="stroke-border"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={40}
-                    tickFormatter={(value: string) =>
-                      format(parseISO(value), "MMM d")
-                    }
-                    className="text-xs"
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value: number) =>
-                      value >= 1000
-                        ? `${(value / 1000).toFixed(0)}k`
-                        : String(value)
-                    }
-                    className="text-xs"
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(value: string) =>
-                          format(parseISO(value), "MMM d, yyyy")
-                        }
-                        indicator="dot"
-                      />
-                    }
-                  />
-                  {visibleSeries.clicks && (
-                    <Line
-                      dataKey="clicks"
-                      type="monotone"
-                      stroke="var(--color-clicks)"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, strokeWidth: 0 }}
-                    />
-                  )}
-                  {visibleSeries.impressions && (
-                    <Line
-                      dataKey="impressions"
-                      type="monotone"
-                      stroke="var(--color-impressions)"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, strokeWidth: 0 }}
-                    />
-                  )}
-                </LineChart>
+                {chartType === "line" ? (
+                  <LineChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
+                    {visibleSeries.clicks && <Line dataKey="clicks" type="monotone" stroke="var(--color-clicks)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />}
+                    {visibleSeries.impressions && <Line dataKey="impressions" type="monotone" stroke="var(--color-impressions)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />}
+                  </LineChart>
+                ) : chartType === "area" ? (
+                  <AreaChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
+                    <defs>
+                      <linearGradient id="fillClicks" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-clicks)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--color-clicks)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="fillImpressions" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--color-impressions)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--color-impressions)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
+                    {visibleSeries.clicks && <Area dataKey="clicks" type="monotone" stroke="var(--color-clicks)" strokeWidth={2} fill="url(#fillClicks)" />}
+                    {visibleSeries.impressions && <Area dataKey="impressions" type="monotone" stroke="var(--color-impressions)" strokeWidth={2} fill="url(#fillImpressions)" />}
+                  </AreaChart>
+                ) : (
+                  <BarChart accessibilityLayer data={metrics} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={40} tickFormatter={(v: string) => format(parseISO(v), "MMM d")} className="text-xs" />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(v: string) => format(parseISO(v), "MMM d, yyyy")} indicator="dot" />} />
+                    {visibleSeries.clicks && <Bar dataKey="clicks" fill="var(--color-clicks)" radius={[2, 2, 0, 0]} />}
+                    {visibleSeries.impressions && <Bar dataKey="impressions" fill="var(--color-impressions)" radius={[2, 2, 0, 0]} />}
+                  </BarChart>
+                )}
               </ChartContainer>
           </CardContent>
         </Card>}
