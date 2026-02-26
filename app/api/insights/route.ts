@@ -5,6 +5,11 @@ import { InsightsRequestSchema, InsightsResponseSchema } from "@/lib/schemas";
 
 export const maxDuration = 60;
 
+const ANALYSIS_MODEL = "claude-sonnet-4-6";
+
+// Module-level singleton: stateless client, reads ANTHROPIC_API_KEY from env
+const anthropic = new Anthropic();
+
 interface SummaryStats {
   total_clicks: number;
   total_impressions: number;
@@ -33,7 +38,14 @@ interface PageRow {
   impressions: number;
 }
 
-function queryData(startDate: string, endDate: string) {
+interface QueryResult {
+  summary: SummaryStats;
+  daily: DailyRow[];
+  topKeywords: KeywordRow[];
+  topPages: PageRow[];
+}
+
+function queryData(startDate: string, endDate: string): QueryResult {
   const summary = db.prepare(`
     SELECT
       SUM(clicks) as total_clicks,
@@ -46,20 +58,21 @@ function queryData(startDate: string, endDate: string) {
     WHERE analytics_date BETWEEN ? AND ?
   `).get(startDate, endDate) as SummaryStats;
 
-  // Last 30 days of range for a more useful trend
+  // Subquery gets last 30 days, outer query sorts chronologically
   const daily = db.prepare(`
-    SELECT
-      analytics_date,
-      SUM(clicks) as clicks,
-      SUM(impressions) as impressions,
-      ROUND(AVG(position), 1) as avg_position
-    FROM gsc
-    WHERE analytics_date BETWEEN ? AND ?
-    GROUP BY analytics_date
-    ORDER BY analytics_date DESC
-    LIMIT 30
+    SELECT * FROM (
+      SELECT
+        analytics_date,
+        SUM(clicks) as clicks,
+        SUM(impressions) as impressions,
+        ROUND(AVG(position), 1) as avg_position
+      FROM gsc
+      WHERE analytics_date BETWEEN ? AND ?
+      GROUP BY analytics_date
+      ORDER BY analytics_date DESC
+      LIMIT 30
+    ) ORDER BY analytics_date ASC
   `).all(startDate, endDate) as DailyRow[];
-  daily.reverse();
 
   const topKeywords = db.prepare(`
     SELECT keyword, SUM(clicks) as clicks, SUM(impressions) as impressions
@@ -94,7 +107,14 @@ Response schema:
   "risksOrUnknowns": ["string - data gap or concern", ...]
 }`;
 
-function buildPrompt(data: ReturnType<typeof queryData>, startDate: string, endDate: string): string {
+// Cached system message: static content is cached by Anthropic to reduce cost on repeat calls
+const SYSTEM_MESSAGE = {
+  type: "text",
+  text: SYSTEM_PROMPT,
+  cache_control: { type: "ephemeral" },
+} as const;
+
+function buildPrompt(data: QueryResult, startDate: string, endDate: string): string {
   const payload = JSON.stringify({
     period: { start: startDate, end: endDate },
     ...data,
@@ -121,8 +141,17 @@ Requirements:
 - risksOrUnknowns: 2-3 data limitations or areas needing deeper investigation`;
 }
 
+// Safety net: strips markdown fences if the prefill technique doesn't fully prevent them
 function stripMarkdownFences(text: string): string {
   return text.replace(/^```(?:json)?\s*\n?/m, "").replace(/\n?```\s*$/m, "").trim();
+}
+
+function safeJsonParse(text: string): unknown | null {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -140,7 +169,7 @@ export async function POST(request: Request) {
     const { startDate, endDate } = parsed.data;
     const data = queryData(startDate, endDate);
 
-    if (!data.summary || !data.summary.total_clicks) {
+    if (!data.summary || data.summary.total_clicks === null) {
       return NextResponse.json(
         { success: false, error: "No data found for the given date range." },
         { status: 404 }
@@ -150,18 +179,10 @@ export async function POST(request: Request) {
     const prompt = buildPrompt(data, startDate, endDate);
     const startTime = Date.now();
 
-    const client = new Anthropic();
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
+    const response = await anthropic.messages.create({
+      model: ANALYSIS_MODEL,
       max_tokens: 2048,
-      // Prompt caching: cache the static system prompt to reduce cost on repeat calls
-      system: [
-        {
-          type: "text" as const,
-          text: SYSTEM_PROMPT,
-          cache_control: { type: "ephemeral" as const },
-        },
-      ],
+      system: [SYSTEM_MESSAGE],
       messages: [
         { role: "user", content: prompt },
         // Prefill: force Claude to start with { for reliable JSON output
@@ -170,46 +191,43 @@ export async function POST(request: Request) {
     });
 
     const latencyMs = Date.now() - startTime;
-    const rawText = message.content[0].type === "text" ? message.content[0].text : "";
+    const firstBlock = response.content[0];
+    const rawText = firstBlock?.type === "text" ? firstBlock.text : "";
     // Prepend the prefilled { since Claude continues from it
     const cleaned = stripMarkdownFences("{" + rawText);
 
-    // Build metrics for observability
+    // Anthropic SDK types don't include cache fields yet, so we cast once
+    const usage = response.usage as Record<string, number>;
     const metrics = {
       latencyMs,
-      inputTokens: message.usage.input_tokens,
-      outputTokens: message.usage.output_tokens,
-      cacheCreated: (message.usage as unknown as Record<string, number>).cache_creation_input_tokens ?? 0,
-      cacheRead: (message.usage as unknown as Record<string, number>).cache_read_input_tokens ?? 0,
-      model: message.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      cacheCreated: usage.cache_creation_input_tokens ?? 0,
+      cacheRead: usage.cache_read_input_tokens ?? 0,
+      model: response.model,
     };
 
-    try {
-      const jsonParsed = JSON.parse(cleaned);
-      const validated = InsightsResponseSchema.safeParse(jsonParsed);
-
-      if (validated.success) {
-        return NextResponse.json({ success: true, insights: validated.data, _metrics: metrics });
-      }
-
-      // Zod validation failed but JSON is valid: return with warning
+    const jsonParsed = safeJsonParse(cleaned);
+    if (!jsonParsed) {
       return NextResponse.json({
-        success: true,
-        insights: jsonParsed,
-        warning: "Response did not match expected schema",
+        success: false,
+        error: "AI response was not valid JSON",
         _metrics: metrics,
-      });
-    } catch {
-      // JSON parse failed entirely: return raw text
-      return NextResponse.json({
-        success: true,
-        raw: rawText,
-        warning: "Response was not valid JSON",
-        _metrics: metrics,
-      });
+      }, { status: 502 });
     }
+
+    const validated = InsightsResponseSchema.safeParse(jsonParsed);
+    if (!validated.success) {
+      return NextResponse.json({
+        success: false,
+        error: "AI response did not match expected schema",
+        _metrics: metrics,
+      }, { status: 502 });
+    }
+
+    return NextResponse.json({ success: true, insights: validated.data, _metrics: metrics });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Insights generation failed";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Insights generation failed";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

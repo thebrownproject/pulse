@@ -9,10 +9,6 @@ import {
   Moon,
   MessageSquareText,
   CalendarIcon,
-  TrendingUp,
-  Zap,
-  AlertTriangle,
-  Target,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -67,11 +63,11 @@ const DEFAULT_END = "2026-01-30";
 const chartConfig = {
   clicks: {
     label: "Clicks",
-    theme: { light: "#7C3AED", dark: "#A78BFA" },
+    theme: { light: "#BA57FC", dark: "#BA57FC" },
   },
   impressions: {
     label: "Impressions",
-    theme: { light: "#2563EB", dark: "#60A5FA" },
+    theme: { light: "#1a1a1a", dark: "#a1a1aa" },
   },
 } satisfies ChartConfig;
 
@@ -295,15 +291,15 @@ export default function Dashboard() {
         {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div>
-                  <CardTitle>Search Performance</CardTitle>
-                  <CardDescription>
-                    Daily clicks and impressions over time
-                  </CardDescription>
-                </div>
+              <div>
+                <CardTitle>Search Performance</CardTitle>
+                <CardDescription>
+                  Daily clicks and impressions over time
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
                 <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "area" | "bar")}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="h-9 w-[90px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -312,15 +308,13 @@ export default function Dashboard() {
                     <SelectItem value="bar">Bar</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   onClick={() => toggleSeries("clicks")}
                   className={cn(
                     "flex h-auto flex-col items-center gap-0 px-5 py-2 transition-all",
                     visibleSeries.clicks
-                      ? "border-violet-500/40 bg-violet-500/5 dark:bg-violet-500/10"
+                      ? "border-[#BA57FC]/30 bg-[#BA57FC]/5"
                       : "opacity-40"
                   )}
                 >
@@ -337,7 +331,7 @@ export default function Dashboard() {
                   className={cn(
                     "flex h-auto flex-col items-center gap-0 px-5 py-2 transition-all",
                     visibleSeries.impressions
-                      ? "border-blue-500/40 bg-blue-500/5 dark:bg-blue-500/10"
+                      ? "border-[#BA57FC]/20 bg-[#BA57FC]/5"
                       : "opacity-40"
                   )}
                 >
@@ -411,7 +405,7 @@ export default function Dashboard() {
         {/* Insights Panel */}
         <div id="insights-panel">
           {insights.loading && (
-            <Card className="border-violet-500/20">
+            <Card>
               <CardContent className="flex items-center justify-center gap-3 py-16">
                 <Shimmer className="text-lg font-medium">
                   Analyzing your search data...
@@ -421,10 +415,9 @@ export default function Dashboard() {
           )}
 
           {insights.error && (
-            <Card className="border-destructive/30">
+            <Card>
               <CardContent className="py-6">
-                <div className="flex items-center gap-2 text-sm text-destructive">
-                  <AlertTriangle className="size-4 shrink-0" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   {insights.error}
                 </div>
               </CardContent>
@@ -437,8 +430,7 @@ export default function Dashboard() {
               {insights.data.executiveSummary?.length > 0 && (
                 <Card className="md:col-span-2">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <TrendingUp className="size-4 text-violet-500" />
+                    <CardTitle className="text-base">
                       Executive Summary
                     </CardTitle>
                   </CardHeader>
@@ -450,7 +442,7 @@ export default function Dashboard() {
                             key={i}
                             className="flex gap-3 text-sm leading-relaxed text-muted-foreground"
                           >
-                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-violet-500" />
+                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground/40" />
                             {point}
                           </li>
                         )
@@ -464,8 +456,7 @@ export default function Dashboard() {
               {insights.data.keyDrivers?.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Zap className="size-4 text-amber-500" />
+                    <CardTitle className="text-base">
                       Key Drivers
                     </CardTitle>
                   </CardHeader>
@@ -493,8 +484,7 @@ export default function Dashboard() {
               {insights.data.actions?.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Target className="size-4 text-emerald-500" />
+                    <CardTitle className="text-base">
                       Recommended Actions
                     </CardTitle>
                   </CardHeader>
@@ -507,13 +497,7 @@ export default function Dashboard() {
                         ) => (
                           <div key={i} className="flex items-start gap-2.5">
                             <Badge
-                              variant={
-                                a.priority === "high"
-                                  ? "destructive"
-                                  : a.priority === "medium"
-                                    ? "secondary"
-                                    : "outline"
-                              }
+                              variant="secondary"
                               className="mt-0.5 shrink-0 text-[10px] uppercase"
                             >
                               {a.priority}
@@ -533,8 +517,7 @@ export default function Dashboard() {
               {insights.data.risksOrUnknowns?.length > 0 && (
                 <Card className="md:col-span-2">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <AlertTriangle className="size-4 text-amber-500" />
+                    <CardTitle className="text-base">
                       Risks & Unknowns
                     </CardTitle>
                   </CardHeader>
@@ -546,7 +529,7 @@ export default function Dashboard() {
                             key={i}
                             className="flex gap-3 text-sm leading-relaxed text-muted-foreground"
                           >
-                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                            <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground/40" />
                             {risk}
                           </li>
                         )
