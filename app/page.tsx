@@ -138,7 +138,8 @@ export default function Dashboard() {
           `/api/metrics?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
         );
         if (!res.ok) throw new Error("Failed to fetch metrics");
-        const data = await res.json();
+        const json = await res.json();
+        const data = Array.isArray(json) ? json : json.data ?? [];
         setMetrics(Array.isArray(data) ? data : []);
         setChartDateRange(`${start}|${end}`);
       } catch {
