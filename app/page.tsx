@@ -207,25 +207,27 @@ export default function Dashboard() {
               </div>
               {/* Series toggle buttons */}
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => toggleSeries("clicks")}
-                  className={`flex flex-col items-center rounded-lg border px-4 py-2 transition-colors ${
+                  className={`flex h-auto flex-col items-center px-4 py-2 ${
                     visibleSeries.clicks
                       ? "border-blue-500/30 bg-blue-500/5"
-                      : "border-border bg-transparent opacity-50"
+                      : "opacity-50"
                   }`}
                 >
                   <span className="text-xs text-muted-foreground">Clicks</span>
                   <span className="text-lg font-bold tabular-nums">
                     {totalClicks.toLocaleString()}
                   </span>
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => toggleSeries("impressions")}
-                  className={`flex flex-col items-center rounded-lg border px-4 py-2 transition-colors ${
+                  className={`flex h-auto flex-col items-center px-4 py-2 ${
                     visibleSeries.impressions
                       ? "border-violet-500/30 bg-violet-500/5"
-                      : "border-border bg-transparent opacity-50"
+                      : "opacity-50"
                   }`}
                 >
                   <span className="text-xs text-muted-foreground">
@@ -234,7 +236,7 @@ export default function Dashboard() {
                   <span className="text-lg font-bold tabular-nums">
                     {totalImpressions.toLocaleString()}
                   </span>
-                </button>
+                </Button>
               </div>
             </div>
           </CardHeader>
