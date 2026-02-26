@@ -79,9 +79,9 @@ type InsightsState = {
   error: string | null;
 };
 
-const PRIORITY_VARIANT: Record<string, "destructive" | "secondary" | "outline"> = {
-  high: "destructive",
-  medium: "secondary",
+const PRIORITY_VARIANT: Record<string, "outline" | "secondary"> = {
+  high: "outline",
+  medium: "outline",
   low: "outline",
 };
 
