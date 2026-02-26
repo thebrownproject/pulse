@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { addDays, format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { Sun, Moon, MessageSquareText, CalendarIcon } from "lucide-react";
+import { Sun, Moon, MessageSquareText, CalendarIcon, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -134,14 +134,13 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch metrics on mount
+  // Fetch metrics on mount and when date range changes
   useEffect(() => {
-    fetchMetrics(DEFAULT_START, DEFAULT_END);
-  }, [fetchMetrics]);
-
-  // Single button triggers both chart refresh and insights generation
-  const handleGenerate = () => {
     fetchMetrics(startDate, endDate);
+  }, [fetchMetrics, startDate, endDate]);
+
+  // Generate Insights triggers only the Claude call
+  const handleGenerate = () => {
     fetchInsights(startDate, endDate);
   };
 
@@ -208,6 +207,18 @@ export default function Dashboard() {
               />
             </PopoverContent>
           </Popover>
+          <Button
+            variant="outline"
+            onClick={() => fetchMetrics(startDate, endDate)}
+            disabled={metricsLoading}
+          >
+            {metricsLoading ? (
+              <Spinner className="size-4" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
+            Update Chart
+          </Button>
           <Button onClick={handleGenerate} disabled={insights.loading}>
             {insights.loading ? (
               <Spinner className="size-4" />
@@ -346,7 +357,7 @@ export default function Dashboard() {
             <Card>
               <CardContent className="flex items-center justify-center py-12">
                 <Shimmer className="text-lg font-medium">
-                  Analyzing with Claude...
+                  Analyzing...
                 </Shimmer>
               </CardContent>
             </Card>
