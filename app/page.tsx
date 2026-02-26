@@ -437,31 +437,31 @@ export default function Dashboard() {
                   {format(parseISO(startDate), "LLL dd, yyyy")} &ndash; {format(parseISO(endDate), "LLL dd, yyyy")}
                 </CardDescription>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex gap-2">
-                  <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Impressions</span>
-                    <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
-                  </div>
-                  <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
-                    <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
-                  </div>
+              <div className="flex gap-2">
+                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Impressions</span>
+                  <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
                 </div>
-                <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
-                  <SelectTrigger className="h-8 w-[80px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="line">Line</SelectItem>
-                    <SelectItem value="bar">Bar</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex w-32 flex-col items-center rounded-lg border px-5 py-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
+                  <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
+                </div>
               </div>
             </div>
           </CardHeader>
-          <Separator />
-          <CardContent className="space-y-6 pt-6">
+          <div className="flex items-center justify-between px-6">
+            <Separator className="flex-1" />
+            <Select value={chartType} onValueChange={(v) => setChartType(v as "line" | "bar")}>
+              <SelectTrigger className="ml-4 h-8 w-[80px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Line</SelectItem>
+                <SelectItem value="bar">Bar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <CardContent className="space-y-6 pt-2">
             {/* Impressions chart */}
             <div>
               <ChartContainer config={chartConfig} className="aspect-auto h-[200px] w-full">
