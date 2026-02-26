@@ -185,16 +185,13 @@ export async function POST(request: Request) {
       system: [SYSTEM_MESSAGE],
       messages: [
         { role: "user", content: prompt },
-        // Prefill: force Claude to start with { for reliable JSON output
-        { role: "assistant", content: "{" },
       ],
     });
 
     const latencyMs = Date.now() - startTime;
     const firstBlock = response.content[0];
     const rawText = firstBlock?.type === "text" ? firstBlock.text : "";
-    // Prepend the prefilled { since Claude continues from it
-    const cleaned = stripMarkdownFences("{" + rawText);
+    const cleaned = stripMarkdownFences(rawText);
 
     // Anthropic SDK types don't include cache fields yet, so we cast once
     const usage = response.usage as Record<string, number>;
