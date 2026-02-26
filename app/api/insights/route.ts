@@ -58,20 +58,16 @@ function queryData(startDate: string, endDate: string): QueryResult {
     WHERE analytics_date BETWEEN ? AND ?
   `).get(startDate, endDate) as SummaryStats;
 
-  // Subquery gets last 30 days, outer query sorts chronologically
   const daily = db.prepare(`
-    SELECT * FROM (
-      SELECT
-        analytics_date,
-        SUM(clicks) as clicks,
-        SUM(impressions) as impressions,
-        ROUND(AVG(position), 1) as avg_position
-      FROM gsc
-      WHERE analytics_date BETWEEN ? AND ?
-      GROUP BY analytics_date
-      ORDER BY analytics_date DESC
-      LIMIT 30
-    ) ORDER BY analytics_date ASC
+    SELECT
+      analytics_date,
+      SUM(clicks) as clicks,
+      SUM(impressions) as impressions,
+      ROUND(AVG(position), 1) as avg_position
+    FROM gsc
+    WHERE analytics_date BETWEEN ? AND ?
+    GROUP BY analytics_date
+    ORDER BY analytics_date ASC
   `).all(startDate, endDate) as DailyRow[];
 
   const topKeywords = db.prepare(`
