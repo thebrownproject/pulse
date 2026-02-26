@@ -123,15 +123,15 @@ function InsightsPanel({ data, loading, error }: {
         <Card className="md:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="size-4 text-violet-500" />
+              <TrendingUp className="size-4" />
               Executive Summary
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2.5">
               {data.executiveSummary.map((point: string, i: number) => (
-                <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground" />
+                <li key={i} className="flex items-baseline gap-2.5 text-sm leading-relaxed text-muted-foreground">
+                  <span className="size-1 shrink-0 translate-y-[-1px] rounded-full bg-foreground/50" />
                   {point}
                 </li>
               ))}
@@ -144,7 +144,7 @@ function InsightsPanel({ data, loading, error }: {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Zap className="size-4 text-amber-500" />
+              <Zap className="size-4" />
               Key Drivers
             </CardTitle>
           </CardHeader>
@@ -167,7 +167,7 @@ function InsightsPanel({ data, loading, error }: {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Target className="size-4 text-emerald-500" />
+              <Target className="size-4" />
               Recommended Actions
             </CardTitle>
           </CardHeader>
@@ -195,15 +195,15 @@ function InsightsPanel({ data, loading, error }: {
         <Card className="md:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-amber-500" />
+              <AlertTriangle className="size-4" />
               Risks & Unknowns
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {data.risksOrUnknowns.map((risk: string, i: number) => (
-                <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-foreground" />
+                <li key={i} className="flex items-baseline gap-2.5 text-sm leading-relaxed text-muted-foreground">
+                  <span className="size-1 shrink-0 translate-y-[-1px] rounded-full bg-foreground/50" />
                   {risk}
                 </li>
               ))}
@@ -448,9 +448,15 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-4 text-sm text-muted-foreground">
-                <span>Clicks: <span className="font-semibold text-foreground tabular-nums">{totalClicks.toLocaleString()}</span></span>
-                <span>Impressions: <span className="font-semibold text-foreground tabular-nums">{totalImpressions.toLocaleString()}</span></span>
+              <div className="flex gap-2">
+                <div className="flex flex-col items-center rounded-lg border px-5 py-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Clicks</span>
+                  <span className="text-xl font-bold tabular-nums">{totalClicks.toLocaleString()}</span>
+                </div>
+                <div className="flex flex-col items-center rounded-lg border border-[#BA57FC]/30 bg-[#BA57FC]/5 px-5 py-2">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#BA57FC]">Impressions</span>
+                  <span className="text-xl font-bold tabular-nums">{totalImpressions.toLocaleString()}</span>
+                </div>
               </div>
             </div>
           </CardHeader>
