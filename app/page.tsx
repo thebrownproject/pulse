@@ -243,7 +243,7 @@ export default function Dashboard() {
               size="sm"
               onClick={handleGenerate}
               disabled={insights.loading || metricsLoading}
-              className="bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500"
+              className=""
             >
               {insights.loading || metricsLoading ? (
                 <Spinner className="size-3.5" />
