@@ -254,6 +254,24 @@ export default function Dashboard() {
 
       <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
 
+        {/* Empty state - shown when no data loaded yet */}
+        {metrics.length === 0 && !metricsLoading && !insights.loading && (
+          <div className="flex flex-col items-center justify-center py-32 text-center">
+            <Image
+              src="/icon.png"
+              alt="Pulse"
+              width={64}
+              height={64}
+              className="mb-6 rounded-xl opacity-60"
+            />
+            <h2 className="text-lg font-medium">Welcome to Pulse</h2>
+            <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
+              Select a date range and click <span className="font-medium text-foreground">Generate Insights</span> to
+              view your search performance and AI-powered analysis.
+            </p>
+          </div>
+        )}
+
         {/* Stat toggles + Chart - only show when we have data */}
         {metrics.length > 0 && <Card>
           <CardHeader className="pb-4">
