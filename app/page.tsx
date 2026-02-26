@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { addDays, format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { Sun, Moon, Sparkles, CalendarIcon } from "lucide-react";
+import { Sun, Moon, MessageSquareText, CalendarIcon } from "lucide-react";
 import Image from "next/image";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -212,7 +212,7 @@ export default function Dashboard() {
             {insights.loading ? (
               <Spinner className="size-4" />
             ) : (
-              <Sparkles className="size-4" />
+              <MessageSquareText className="size-4" />
             )}
             Generate Insights
           </Button>

@@ -148,38 +148,64 @@ export async function POST(request: Request) {
     }
 
     const prompt = buildPrompt(data, startDate, endDate);
+    const startTime = Date.now();
 
     const client = new Anthropic();
     const message = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: prompt }],
+      // Prompt caching: cache the static system prompt to reduce cost on repeat calls
+      system: [
+        {
+          type: "text" as const,
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
+      messages: [
+        { role: "user", content: prompt },
+        // Prefill: force Claude to start with { for reliable JSON output
+        { role: "assistant", content: "{" },
+      ],
     });
 
+    const latencyMs = Date.now() - startTime;
     const rawText = message.content[0].type === "text" ? message.content[0].text : "";
-    const cleaned = stripMarkdownFences(rawText);
+    // Prepend the prefilled { since Claude continues from it
+    const cleaned = stripMarkdownFences("{" + rawText);
+
+    // Build metrics for observability
+    const metrics = {
+      latencyMs,
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+      cacheCreated: (message.usage as unknown as Record<string, number>).cache_creation_input_tokens ?? 0,
+      cacheRead: (message.usage as unknown as Record<string, number>).cache_read_input_tokens ?? 0,
+      model: message.model,
+    };
 
     try {
       const jsonParsed = JSON.parse(cleaned);
       const validated = InsightsResponseSchema.safeParse(jsonParsed);
 
       if (validated.success) {
-        return NextResponse.json({ success: true, insights: validated.data });
+        return NextResponse.json({ success: true, insights: validated.data, _metrics: metrics });
       }
 
-      // Zod validation failed: return raw with warning
+      // Zod validation failed but JSON is valid: return with warning
       return NextResponse.json({
         success: true,
         insights: jsonParsed,
         warning: "Response did not match expected schema",
+        _metrics: metrics,
       });
     } catch {
       // JSON parse failed entirely: return raw text
       return NextResponse.json({
         success: true,
         raw: rawText,
-        warning: "Response did not match expected schema",
+        warning: "Response was not valid JSON",
+        _metrics: metrics,
       });
     }
   } catch (err) {
